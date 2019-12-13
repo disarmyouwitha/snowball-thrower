@@ -1,18 +1,13 @@
-## snowball thrower
+## splat_bot:
+I've been watching these repos for a while, finally got myself a Teensy2.0++ and hopped into things. =] 
 
-Automatically throws snowballs in The Legend of Zelda: Breath of the Wild by emulating a controller on a Teensy++ v2.0
+I've enjoyed the splat-post printer, and I was even further inspired by the snowball thrower bertrandom wrote 
+(as well as splat-booya an earlier attempt at a Splatoon2 bot!)
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/udo8mv5oarg/0.jpg)](https://www.youtube.com/watch?v=udo8mv5oarg)
-
-A full writeup is [here](https://medium.com/@bertrandom/automating-zelda-3b37127e24c8).
+More updates to come?
 
 #### How to use
-
-Walk up to Pondo until the **(A) Talk** option is available and plug in the controller. It will automatically sync with the console, initiate the bowling game with Pondo, throw a perfect strike, and end the bowling game. It will play the bowling game in a loop.
-
-Note that due to certain weather conditions, Link will sometimes fail to throw a strike, causing the game to enter into a mode where Link has to throw again. Thanks to a [change by exsilium](https://github.com/bertrandom/snowball-thrower/pull/1), the loop will recover from this, given enough time. I've tested this running for over 24 hours.
-
-In case you see issues with controller conflicts while in docked mode, try using a USB-C to USB-A adapter in handheld mode. In dock mode, changes in the HDMI connection will briefly make the Switch not respond to incoming USB commands, skipping parts of the sequence. These changes may include turning off the TV, or switching the HDMI input. (Switching to the internal tuner will be OK, if this doesn't trigger a change in the HDMI input.)
+    Not sure yet!
 
 This repository has been tested using a Teensy 2.0++.
 
@@ -30,6 +25,9 @@ will put LUFA in the right directory.
 Now you should be ready to rock. Open a terminal window in the `snowball-thrower` directory, type `make`, and hit enter to compile. If all goes well, the printout in the terminal will let you know it finished the build! Follow the directions on flashing `Joystick.hex` onto your Teensy, which can be found page where you downloaded the Teensy Loader application.
 
 #### Thanks
+I stand on the shoulders of GIANTS: TY to everyone from the person who worked on LUFA to the person who reversed the HORI Fightstick to the meme'rs who set up the first splat-post printer, inspiring many projects from there. =]
+
+Thanks to bertrandom https://github.com/bertrandom/snowball-thrower for his work on adding LOGOs to the existing code and setting up a more structural way to communicate with the switch. (https://medium.com/@bertrandom/automating-zelda-3b37127e24c8)
 
 Thanks to Shiny Quagsire for his [Splatoon post printer](https://github.com/shinyquagsire23/Switch-Fightstick) and progmem for his [original discovery](https://github.com/progmem/Switch-Fightstick).
 
