@@ -22,19 +22,26 @@ these buttons for our use.
 
 // [Define some global buttons]:
 typedef enum {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT,
+    LSTICK_UP,
+    LSTICK_DOWN,
+    LSTICK_LEFT,
+    LSTICK_RIGHT,
+    RSTICK_UP,
+    RSTICK_DOWN,
+    RSTICK_LEFT,
+    RSTICK_RIGHT,
     X,
     Y,
     A,
     B,
     L,
     R,
-    THROW,
+    THROW_SUB,
     NOTHING,
-    TRIGGERS
+    TRIGGERS,
+    SQUID, ZL,
+    SHOOT, ZR
+
 } Buttons_t;
 
 typedef struct {
@@ -45,25 +52,42 @@ typedef struct {
 // [Bot Instructions]:
 static const command step[] = 
 {
-    // Setup controller
-    { NOTHING,  250 },
-    { TRIGGERS,   5 },
-    { NOTHING,  150 },
-    { TRIGGERS,   5 },
-    { NOTHING,  150 },
-    { A,          5 },
-    { NOTHING,  250 },
+    // [Setup controller[:]
+    { NOTHING,      250 },
+    { TRIGGERS,       5 },
+    { NOTHING,        5 }, // I was getting splat-bombs thrown after controller sync so I think it was L+R too many times.
+    { NOTHING,        5 }, // { TRIGGERS,   5 },
+    { NOTHING,        5 }, // { NOTHING,  150 },
+    { NOTHING,        5 }, // { A,          5 },
+    { NOTHING,        5 }, // { NOTHING,  250 },
+    // ^(Running out room on instructions until index 7)
 
-    // TEST1:
-    { Y,          5 }, // Center view
-    { NOTHING,   30 },
-    { B,          5 }, // Jump Test #1!
-    { NOTHING,   20 },
-    { B,          5 }, // Jump Test #2!
-    { NOTHING,   15 },
-    { B,          5 }, // Jump Test x3!
-    { B,          5 },
-    { B,          5 }
+    // [Bot Instructions]:
+    { Y,             10 }, // Center view
+    { NOTHING,       20 },
+    { B,              5 }, // Jump!
+    { NOTHING,       20 },
+    { LSTICK_UP,     30 }, // Move UP 30 (about) 1 line in test area
+    { SHOOT,          5 }, // Ink!
+    { NOTHING,       20 },
+    { RSTICK_LEFT,    9 }, // Turn left
+    { LSTICK_UP,     30 }, // Move UP 30 (about) 1 line in test area
+    { SHOOT,          5 }, // Ink!
+    { NOTHING,       20 },
+    { RSTICK_LEFT,    9 }, // Turn left
+    { LSTICK_UP,     30 }, // Move UP 30 (about) 1 line in test area
+    { SHOOT,          5 }, // Ink!
+    { NOTHING,       20 },
+    { RSTICK_LEFT,    9 }, // Turn left
+    { LSTICK_UP,     30 }, // Move UP 30 (about) 1 line in test area
+    { SHOOT,          5 }, // Ink!
+    { NOTHING,       20 },
+    { SQUID,        200 } // Hide!
+
+    //{ RSTICK_LEFT,   10 }, // Turn camera (about) 90 degrees LEFT
+    //{ UP,        30 }, // Move forward 30 (about) 1 lines in test area
+    //{ UP,        60 }, // Move forward 60 (about) 2 lines in test area
+    //{ UP,        90 }, // Move Forward 90 (about) 3 lines in test area
 };
 // ^(CC)
 
@@ -247,17 +271,29 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
         case PROCESS:
             switch (step[bufindex].button)
             {
-                case UP:
+                case LSTICK_UP:
                     ReportData->LY = STICK_MIN;
                     break;
-                case LEFT:
+                case LSTICK_LEFT:
                     ReportData->LX = STICK_MIN;
                     break;
-                case DOWN:
+                case LSTICK_DOWN:
                     ReportData->LY = STICK_MAX;
                     break;
-                case RIGHT:
+                case LSTICK_RIGHT:
                     ReportData->LX = STICK_MAX;
+                    break;
+                case RSTICK_UP:
+                    ReportData->RY = STICK_MIN;
+                    break;
+                case RSTICK_LEFT:
+                    ReportData->RX = STICK_MIN;
+                    break;
+                case RSTICK_DOWN:
+                    ReportData->RY = STICK_MAX;
+                    break;
+                case RSTICK_RIGHT:
+                    ReportData->RX = STICK_MAX;
                     break;
                 case A:
                     ReportData->Button |= SWITCH_A;
@@ -268,9 +304,17 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                 case R:
                     ReportData->Button |= SWITCH_R;
                     break;
-                case THROW:
+                case THROW_SUB: // composite example
                     ReportData->LY = STICK_MIN;
                     ReportData->Button |= SWITCH_R;
+                    break;
+                case ZL:
+                case SQUID:
+                    ReportData->Button |= SWITCH_ZL;
+                    break;
+                case ZR:
+                case SHOOT:
+                    ReportData->Button |= SWITCH_ZR;
                     break;
                 case TRIGGERS:
                     ReportData->Button |= SWITCH_L | SWITCH_R;
