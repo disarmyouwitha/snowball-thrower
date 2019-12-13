@@ -22,19 +22,19 @@ these buttons for our use.
 
 // [Define some global buttons]:
 typedef enum {
-	UP,
-	DOWN,
-	LEFT,
-	RIGHT,
-	X,
-	Y,
-	A,
-	B,
-	L,
-	R,
-	THROW,
-	NOTHING,
-	TRIGGERS
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    X,
+    Y,
+    A,
+    B,
+    L,
+    R,
+    THROW,
+    NOTHING,
+    TRIGGERS
 } Buttons_t;
 
 typedef struct {
@@ -52,7 +52,18 @@ static const command step[] =
     { TRIGGERS,   5 },
     { NOTHING,  150 },
     { A,          5 },
-    { NOTHING,  250 }
+    { NOTHING,  250 },
+
+    // TEST1:
+    { Y,          5 }, // Center view
+    { NOTHING,   30 },
+    { B,          5 }, // Jump Test #1!
+    { NOTHING,   20 },
+    { B,          5 }, // Jump Test #2!
+    { NOTHING,   15 },
+    { B,          5 }, // Jump Test x3!
+    { B,          5 },
+    { B,          5 }
 };
 // ^(CC)
 
@@ -169,29 +180,19 @@ void HID_Task(void) {
     }
 }
 
-// (CC):
 // [DEFINE STATE]:
-typedef enum {          // [[splat-booya]]:
-	SYNC_CONTROLLER,
-	BOOYAH,
-	DONE
+typedef enum {
+    SYNC_CONTROLLER,
+    SYNC_POSITION,
+    BREATHE,
+    PROCESS,
+    CLEANUP,
+    DONE
 } State_t;
 State_t state = SYNC_CONTROLLER;
-
-/*
-typedef enum {          // [[snow-baller]]:
-	SYNC_CONTROLLER,
-	SYNC_POSITION,
-	BREATHE,
-	PROCESS,
-	CLEANUP,
-	DONE
-} State_t;
-State_t state = SYNC_CONTROLLER;
-*/
 // ^(CC)
 
-#define ECHOES 2 // [[snow-baller]]
+#define ECHOES 2
 int echoes = 0;
 USB_JoystickReport_Input_t last_report;
 
@@ -201,33 +202,6 @@ int ypos = 0;
 int bufindex = 0;
 int duration_count = 0;
 int portsval = 0;
-
-#define max(a, b) (a > b ? a : b)                                   // Used for syncing controller? (pressing L+R buttons, etc)
-#define ms_2_count(ms) (ms / ECHOES / (max(POLLING_MS, 8) / 8 * 8)) // Used for syncing controller? (pressing L+R buttons, etc)
-
-// (CC): (Great place to add your own functions -- everyone seems to be hooking here.. complete_zig_zag_pattern(), booya(), etc)
-/*
-void complete_zig_zag_pattern(USB_JoystickReport_Input_t *const ReportData)
-{
-    uint8_t move_direction;
-    if (ypos % 4 < 2)
-        move_direction = HAT_RIGHT;
-    else
-        move_direction = HAT_LEFT;
-
-    //... https://github.com/disarmyouwitha/Splatmeme-Printer/blob/master/Joystick.c ...
-}
-*/
-
-/*
-bool moving_left = true;
-bool turning_left = true;
-void booyah(USB_JoystickReport_Input_t *const ReportData) 
-{ 
-    //... https://github.com/3096/Splat-Booyah/blob/booyah/Joystick.c ...
-}
-*/
-// ^(CC)
 
 // [Prepare the next report for the host]:
 void GetNextReport(USB_JoystickReport_Input_t* const ReportData) 

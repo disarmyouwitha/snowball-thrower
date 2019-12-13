@@ -25,10 +25,10 @@ will put LUFA in the right directory.
 Now you should be ready to rock. Open a terminal window in the `snowball-thrower` directory, type `make`, and hit enter to compile. If all goes well, the printout in the terminal will let you know it finished the build! Follow the directions on flashing `Joystick.hex` onto your Teensy, which can be found page where you downloaded the Teensy Loader application.
 
 #### Thanks
-I stand on the shoulders of GIANTS: TY to everyone from the person who worked on LUFA to the person who reversed the HORI Fightstick to the meme'rs who set up the first splat-post printer, inspiring many projects from there. =]
+> I stand on the shoulders of GIANTS: TY to everyone from the person who worked on LUFA to the person who reversed the HORI Fightstick to the meme'rs who set up the first splat-post printer, inspiring many projects from there. =]
 
-Thanks to bertrandom https://github.com/bertrandom/snowball-thrower for his work on adding LOGOs to the existing code and setting up a more structural way to communicate with the switch. (https://medium.com/@bertrandom/automating-zelda-3b37127e24c8)
+> Thanks to bertrandom https://github.com/bertrandom/snowball-thrower for his work on adding LOGOs to the existing code and setting up a more structural way to communicate with the switch. (https://medium.com/@bertrandom/automating-zelda-3b37127e24c8)
 
-Thanks to Shiny Quagsire for his [Splatoon post printer](https://github.com/shinyquagsire23/Switch-Fightstick) and progmem for his [original discovery](https://github.com/progmem/Switch-Fightstick).
+> Thanks to Shiny Quagsire for his [Splatoon post printer](https://github.com/shinyquagsire23/Switch-Fightstick) and progmem for his [original discovery](https://github.com/progmem/Switch-Fightstick).
 
-Thanks to [exsilium](https://github.com/bertrandom/snowball-thrower/pull/1) for improving the command structure, optimizing the waiting times, and handling the failure scenarios. It can now run indefinitely!
+> Thanks to [exsilium](https://github.com/bertrandom/snowball-thrower/pull/1) for improving the command structure, optimizing the waiting times, and handling the failure scenarios. It can now run indefinitely!
