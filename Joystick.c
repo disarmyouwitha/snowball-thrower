@@ -20,6 +20,8 @@ these buttons for our use.
 
 #include "Joystick.h"
 
+// Teensy++ 2.0 has the LED on pin 6
+
 // [Define some global buttons]:
 typedef enum {
     LSTICK_UP,
@@ -40,8 +42,10 @@ typedef enum {
     NOTHING,
     TRIGGERS,
     SQUID, ZL,
-    SHOOT, ZR
-
+    SHOOT, ZR,
+    SWIM_UP, SWIM_DOWN, SWIM_LEFT, SWIM_RIGHT,
+    READ_INPUT,
+    BLINK, LED_ON, LED_OFF
 } Buttons_t;
 
 typedef struct {
@@ -52,19 +56,24 @@ typedef struct {
 // [Bot Instructions]:
 static const command step[] = 
 {
+    // Need to be able to send combo commands like:
+    //{ [LSTICK_UP,SHOOT]  200 },
+    //Instead of SWIM_UP use?:
+    //{ [SQUID ,LSTICK_UP]  200 },
+ 
     // [Setup controller[:]
     { NOTHING,      250 },
     { TRIGGERS,       5 },
     { NOTHING,        5 }, // I was getting splat-bombs thrown after controller sync so I think it was L+R too many times.
     { NOTHING,        5 }, // { TRIGGERS,   5 },
     { NOTHING,        5 }, // { NOTHING,  150 },
-    { NOTHING,        5 }, // { A,          5 },
+    { Y,             10 }, // { A,          5 },
     { NOTHING,        5 }, // { NOTHING,  250 },
     // ^(Running out room on instructions until index 7)
 
     // [Bot Instructions]:
-    { Y,             10 }, // Center view
-    { NOTHING,       20 },
+    //{ READ_INPUT, 200 }, // Read Input from Voltage on C2!
+    /*
     { B,              5 }, // Jump!
     { NOTHING,       20 },
     { LSTICK_UP,     30 }, // Move UP 30 (about) 1 line in test area
@@ -82,14 +91,16 @@ static const command step[] =
     { LSTICK_UP,     30 }, // Move UP 30 (about) 1 line in test area
     { SHOOT,          5 }, // Ink!
     { NOTHING,       20 },
-    { SQUID,        200 } // Hide!
-
+    { SQUID,        200 }, // Hide!
+    */
+    { READ_INPUT,   200 }
+    /*
     //{ RSTICK_LEFT,   10 }, // Turn camera (about) 90 degrees LEFT
     //{ UP,        30 }, // Move forward 30 (about) 1 lines in test area
     //{ UP,        60 }, // Move forward 60 (about) 2 lines in test area
     //{ UP,        90 }, // Move Forward 90 (about) 3 lines in test area
+    */
 };
-// ^(CC)
 
 // [Main entry point]:
 int main(void)
@@ -116,16 +127,14 @@ void SetupHardware(void)
     clock_prescale_set(clock_div_1);
 
     // [We can then initialize our hardware and peripherals, including the USB stack]:
-    #ifdef ALERT_WHEN_DONE
-        // Both PORTD and PORTB will be used for the optional LED flashing and buzzer.
-        #warning LED and Buzzer functionality enabled. All pins on both PORTB and PORTD will toggle when printing is done.
-        DDRD  = 0xFF; //Teensy uses PORTD
-        PORTD =  0x0;
-                      //We'll just flash all pins on both ports since the UNO R3
-        //DDRB  = 0xFF; //uses PORTB. Micro can use either or, but both give us 2 LEDs
-        //PORTB =  0x0; //The ATmega328P on the UNO will be resetting, so unplug it?
-        // ^(Remove after confirmed working.. Not going to buy an UNO xD)
-    #endif
+    DDRB  = 0x00; // Configure Direction: 0=Input, 1=Output
+    PORTB = 0x0; // Config Input (when DDRx=0): 0=Normal, 1=Pullup Resistor
+
+    DDRC  = 0x00; //0xFF; //Teensy uses PORTD
+    PORTC = 0x0;
+
+    DDRD  = 0x00; //0xFF; //Teensy uses PORTD
+    PORTD = 0x0;
 
     // The USB stack should be initialized last.
     USB_Init();
@@ -214,7 +223,6 @@ typedef enum {
     DONE
 } State_t;
 State_t state = SYNC_CONTROLLER;
-// ^(CC)
 
 #define ECHOES 2
 int echoes = 0;
@@ -319,6 +327,84 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                 case TRIGGERS:
                     ReportData->Button |= SWITCH_L | SWITCH_R;
                     break;
+                case READ_INPUT:
+                    // ((W)): FORWARD
+                    // PHOTON(D5) to TEENSY(C7)
+                    if (PINC & (1<<7)) 
+                    {
+                        /* Pin C7 (W) is High */
+                        ReportData->LY = STICK_MIN;
+                    } else {
+                        /* Pin C7 (W) is Low */
+                        //ReportData->LY = STICK_CENTER;
+                    }
+
+                    // ((S)): BACK
+                    // PHOTON(D3) to TEENSY(C1)
+                    if (PINC & (1<<1)) 
+                    {
+                        /* Pin D7 (D) is High */
+                        ReportData->LY = STICK_MAX;
+                    } else {
+                        /* Pin D7 (D) is Low */
+                        //ReportData->RX = STICK_CENTER;
+                    }
+
+                    // ((A)): TURN_LEFT
+                    // PHOTON(D4) to TEENSY(B2)
+                    if (PINB & (1<<2)) 
+                    {
+                        /* Pin B2 (A) is High */
+                        ReportData->RX = STICK_MIN;
+                    } else {
+                        /* Pin B2 (A) is Low */
+                        //ReportData->RX = STICK_CENTER;
+                    }
+
+                    // ((D)): TURN_RIGHT
+                    // PHOTON(D2) to TEENSY(D7)
+                    if (PIND & (1<<7)) 
+                    {
+                        /* Pin D7 (D) is High */
+                        ReportData->RX = STICK_MAX;
+                    } else {
+                        /* Pin D7 (D) is Low */
+                        //ReportData->RX = STICK_CENTER;
+                    }
+
+                    // ((F)): FIRE
+                    // PHOTON(A1) to TEENSY(D3)
+                    if (PIND & (1<<3)) 
+                    {
+                        /* Pin A1 (F) is High */
+                        ReportData->Button |= SWITCH_ZR;
+                    } else {
+                        /* Pin A1 (F) is Low */
+                        ReportData->Button |= SWITCH_ZL;
+                    }
+
+                    // ((J)): FIRE
+                    // PHOTON(D0) to TEENSY(D5)
+                    //if (PIND & (1<<5)) 
+                    //{
+                    //    /* Pin D0 (J) is High */
+                    //    ReportData->Button |= SWITCH_ZR;
+                    //} else {
+                    //    /* Pin D0 (J) is Low */
+                    //    ReportData->Button |= SWITCH_ZL;
+                    //}
+
+                    break;
+                case BLINK:
+                    if (PINB & (1<<2)) 
+                    {
+                        /* Pin B2 is High */
+                        portsval = ~portsval;
+                        PORTD = portsval; // flash LED(s) and sound buzzer if attached
+                        _delay_ms(250);
+                    } else {
+                        /* Pin D2 is Low */
+                    }
                 default:
                     ReportData->LX = STICK_CENTER;
                     ReportData->LY = STICK_CENTER;
@@ -354,12 +440,10 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
             break;
 
         case DONE:
-            #ifdef ALERT_WHEN_DONE
-                portsval = ~portsval;
-                PORTD = portsval; //flash LED(s) and sound buzzer if attached
-                //PORTB = portsval;  //remove PORTB is for arduino uno
-                _delay_ms(250);
-            #endif
+            portsval = ~portsval;
+            PORTD = portsval; // flash LED(s) and sound buzzer if attached
+            PORTB = portsval;
+            _delay_ms(250);
             return;
     }
 
