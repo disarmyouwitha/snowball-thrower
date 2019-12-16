@@ -26,12 +26,12 @@ This allows me to send input from a program running on my computer, to the tiny 
 
 > CURRENT ISSUE: Can't control Right-stick up/down (?) Tried mapping to I/K keys, but no up/down.. Maybe locked from settings?
 
-> [HOW TO USE]:
+#### [HOW TO USE]: (splat_keyboard)
 > 0. Flash the .ino files to the PHOTON [ack.. need to add these to the repo tonight!]
 > 1. Make / Flash the Joystick.hex file to the TEENSY
 > 2. run `python3 usb_interface.py` from your computer, it will start to capture your keyboard input
 
-#### [How to use]:
+#### [HOW TO USE]:
 For compiling and flashing `Joystick.hex` (the main program) follow the instructions below. This will be all you will need to do, aside from hook it into your switch, if you are running the bot that is just "following instructions". For how to use the keyboard interface, read above^^
 
 #### Compiling and Flashing onto the Teensy 2.0++
