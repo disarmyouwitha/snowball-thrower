@@ -5,7 +5,18 @@ import serial
 import contextlib
 import omni_listener
 
-_SERIAL = False
+# HATS for Joystick.c (Left buttons, BOOYA, etc)
+'''
+# https://github.com/LightningStalker/Splatmeme-Printer/blob/master/Joystick.c
+if (ReportData->HAT == HAT_RIGHT)
+	xpos++;
+else if (ReportData->HAT == HAT_LEFT)
+	xpos--;
+else if (ReportData->HAT == HAT_TOP)
+	ypos--;
+else if (ReportData->HAT == HAT_BOTTOM)
+	ypos++;
+'''
 
 # [Neat helper function for timing operations!]:
 @contextlib.contextmanager
