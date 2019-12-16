@@ -3,6 +3,10 @@ I've been watching these repos for a while, finally got myself a Teensy2.0++ and
 
 I've enjoyed the splat-post printer (https://github.com/LightningStalker/Splatmeme-Printer) and I was even further inspired by the snowball-thrower bertrandom wrote (https://github.com/bertrandom/snowball-thrower) as well as splat-booya, an earlier attempt at a Splatoon2 bot by prolific splatoon coder 3096 (https://github.com/3096/Splat-Booyah) 
 
+https://www.reddit.com/r/Saltoon/comments/eawfdy/neat_or_nah/
+
+> ^(Early testing vid)
+
 ## [Splat Bot]:
 I have written 2 variants of this code.. one a static bot that follows a set of instructions when you plug it in (much like the Zelda snowball-thrower) but more fleshed out with all of the options it needs to play splatoon.. I will most certainly circle back on this idea at a later date.
 
