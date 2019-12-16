@@ -15,6 +15,7 @@ The other is a side-side project, where I have set up a spare micro-controller (
 > ^(I would like to see if I can communicate directly with the Teensy over Tx/Rx or something, to reduce the amount of wiring.. or potentially the need for a 2nd micro-controller)
 
 [HOW TO USE]: 
+
 0. Flash the .ino files to the PHOTON [ack.. need to add these to the repo tonight!]
 1. Make / Flash the Joystick.hex file to the TEENSY
 2. run `python3 usb_interface.py` from your computer, it will start to capture your keyboard input
