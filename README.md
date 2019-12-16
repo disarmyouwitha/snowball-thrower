@@ -8,18 +8,11 @@ https://www.reddit.com/r/Saltoon/comments/eawfdy/neat_or_nah/
 > ^(Early testing vid)
 
 ## [Splat Bot]:
-I have written 2 variants of this code.. one a static bot that follows a set of instructions when you plug it in (much like the Zelda snowball-thrower) but more fleshed out with all of the options it needs to play splatoon.. I will most certainly circle back on this idea at a later date.
+I have written 2 variants of this code.. one a static bot that follows a set of instructions when you plug it in (much like the Zelda snowball-thrower) but more fleshed out with all of the options it needs to play splatoon. (I will most certainly circle back on this idea at a later date, and will add options to Joystick.hex soon boot into this mode)..
 
 ## [Splat Keyboard??]:
 The other is a side-side project, where I have set up a spare micro-controller (PHOTON) of mine to receive keyboard input over the serial line with a simple python program.. It takes the input from serial and translates it into digitalWrite HIGH/LOW (basically 3.3v on or off) on 1 pin for each button.. which is mapped to another pin on the Teensy, which is able to read the HIGH/LOW voltage.
 > ^(I would like to see if I can communicate directly with the Teensy over Tx/Rx or something, to reduce the amount of wiring.. or potentially the need for a 2nd micro-controller)
-
-[HOW TO USE]: 
-
-0. Flash the .ino files to the PHOTON [ack.. need to add these to the repo tonight!]
-1. Make / Flash the Joystick.hex file to the TEENSY
-2. run `python3 usb_interface.py` from your computer, it will start to capture your keyboard input
-
 
 This allows me to send input from a program running on my computer, to the tiny computer pretending to be the switch controller. =] At this point I have mapped 15 of the buttons to keys, and I am able to play Turf Wars via my keyboard (Poorly.. I feel. xD But that is more to do with input learning curve, lol) 
 
@@ -32,6 +25,11 @@ This allows me to send input from a program running on my computer, to the tiny 
 > NEXT UP: Playback actions.
 
 > CURRENT ISSUE: Can't control Right-stick up/down (?) Tried mapping to I/K keys, but no up/down.. Maybe locked from settings?
+
+> [HOW TO USE]:
+> 0. Flash the .ino files to the PHOTON [ack.. need to add these to the repo tonight!]
+> 1. Make / Flash the Joystick.hex file to the TEENSY
+> 2. run `python3 usb_interface.py` from your computer, it will start to capture your keyboard input
 
 #### [How to use]:
 For compiling and flashing `Joystick.hex` (the main program) follow the instructions below. This will be all you will need to do, aside from hook it into your switch, if you are running the bot that is just "following instructions". For how to use the keyboard interface, read above^^
