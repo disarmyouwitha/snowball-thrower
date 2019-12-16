@@ -10,7 +10,7 @@ https://www.reddit.com/r/Saltoon/comments/eawfdy/neat_or_nah/
 ## [Splat Bot]:
 I have written 2 variants of this code.. one a static bot that follows a set of instructions when you plug it in (much like the Zelda snowball-thrower) but more fleshed out with all of the options it needs to play splatoon. (I will most certainly circle back on this idea at a later date, and will add options to Joystick.hex soon boot into this mode)..
 
-## [Splat Keyboard??]:
+## [Splat Keyboard]:??
 The other is a side-side project, where I have set up a spare micro-controller (PHOTON) of mine to receive keyboard input over the serial line with a simple python program.. It takes the input from serial and translates it into digitalWrite HIGH/LOW (basically 3.3v on or off) on 1 pin for each button.. which is mapped to another pin on the Teensy, which is able to read the HIGH/LOW voltage.
 > ^(I would like to see if I can communicate directly with the Teensy over Tx/Rx or something, to reduce the amount of wiring.. or potentially the need for a 2nd micro-controller)
 
