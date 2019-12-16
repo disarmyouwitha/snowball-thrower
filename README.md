@@ -3,7 +3,7 @@ I've been watching these repos for a while, finally got myself a Teensy2.0++ and
 
 I've enjoyed the splat-post printer (https://github.com/LightningStalker/Splatmeme-Printer) and I was even further inspired by the snowball-thrower bertrandom wrote (https://github.com/bertrandom/snowball-thrower) as well as splat-booya, an earlier attempt at a Splatoon2 bot by prolific splatoon coder 3096 (https://github.com/3096/Splat-Booyah) 
 
-> [Early testing vid]:
+## [Early testing vid]:
 https://www.reddit.com/r/Saltoon/comments/eawfdy/neat_or_nah/
 
 
