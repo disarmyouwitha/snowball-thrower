@@ -136,6 +136,12 @@ void SetupHardware(void)
     DDRD  = 0x00; //0xFF; //Teensy uses PORTD
     PORTD = 0x0;
 
+    DDRE  = 0x00; //0xFF; //Teensy uses PORTD
+    PORTE = 0x0;
+
+    DDRF  = 0x00; //0xFF; //Teensy uses PORTD
+    PORTF = 0x0;
+
     // The USB stack should be initialized last.
     USB_Init();
 }
@@ -234,6 +240,7 @@ int ypos = 0;
 int bufindex = 0;
 int duration_count = 0;
 int portsval = 0;
+int _SQUID_OR_WALK = 0;
 
 // [Prepare the next report for the host]:
 void GetNextReport(USB_JoystickReport_Input_t* const ReportData) 
@@ -312,6 +319,9 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                 case R:
                     ReportData->Button |= SWITCH_R;
                     break;
+                case Y:
+                    ReportData->Button |= SWITCH_Y;
+                    break;
                 case THROW_SUB: // composite example
                     ReportData->LY = STICK_MIN;
                     ReportData->Button |= SWITCH_R;
@@ -328,71 +338,98 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     ReportData->Button |= SWITCH_L | SWITCH_R;
                     break;
                 case READ_INPUT:
-                    // ((W)): FORWARD
-                    // PHOTON(D5) to TEENSY(C7)
-                    if (PINC & (1<<7)) 
+                    //A0_F6 // W // FORWARD
+                    if (PINF & (1<<6)) 
                     {
-                        /* Pin C7 (W) is High */
                         ReportData->LY = STICK_MIN;
-                    } else {
-                        /* Pin C7 (W) is Low */
-                        //ReportData->LY = STICK_CENTER;
                     }
 
-                    // ((S)): BACK
-                    // PHOTON(D3) to TEENSY(C1)
-                    if (PINC & (1<<1)) 
+                    //A1_F4 // A // TURN_LEFT
+                    if (PINF & (1<<4)) 
                     {
-                        /* Pin D7 (D) is High */
-                        ReportData->LY = STICK_MAX;
-                    } else {
-                        /* Pin D7 (D) is Low */
-                        //ReportData->RX = STICK_CENTER;
+                        ReportData->RX = STICK_MIN;
                     }
 
-                    // ((A)): TURN_LEFT
-                    // PHOTON(D4) to TEENSY(B2)
+                    //A2_F1 // S // BACK
+                    if (PINF & (1<<1)) 
+                    {
+                        ReportData->LY = STICK_MAX;
+                    }
+
+                    //A3_E6 // D // TURN_RIGHT
+                    if (PINE & (1<<6)) 
+                    {
+                        ReportData->RX = STICK_MAX;
+                    }
+
+                    //A5_B2 // F // Squid/Walk
                     if (PINB & (1<<2)) 
                     {
-                        /* Pin B2 (A) is High */
-                        ReportData->RX = STICK_MIN;
-                    } else {
-                        /* Pin B2 (A) is Low */
-                        //ReportData->RX = STICK_CENTER;
+                        // If pin goes HIGH, toggle squid/walk:
+                        _SQUID_OR_WALK = ~_SQUID_OR_WALK;
+                        _delay_ms(250);
                     }
 
-                    // ((D)): TURN_RIGHT
-                    // PHOTON(D2) to TEENSY(D7)
-                    if (PIND & (1<<7)) 
+                    if (_SQUID_OR_WALK)
                     {
-                        /* Pin D7 (D) is High */
-                        ReportData->RX = STICK_MAX;
-                    } else {
-                        /* Pin D7 (D) is Low */
-                        //ReportData->RX = STICK_CENTER;
-                    }
-
-                    // ((F)): FIRE
-                    // PHOTON(A1) to TEENSY(D3)
-                    if (PIND & (1<<3)) 
-                    {
-                        /* Pin A1 (F) is High */
-                        ReportData->Button |= SWITCH_ZR;
-                    } else {
-                        /* Pin A1 (F) is Low */
                         ReportData->Button |= SWITCH_ZL;
                     }
 
-                    // ((J)): FIRE
-                    // PHOTON(D0) to TEENSY(D5)
-                    //if (PIND & (1<<5)) 
-                    //{
-                    //    /* Pin D0 (J) is High */
-                    //    ReportData->Button |= SWITCH_ZR;
-                    //} else {
-                    //    /* Pin D0 (J) is Low */
-                    //    ReportData->Button |= SWITCH_ZL;
-                    //}
+                    //A4_B0 // J // Fire/No Fire
+                    if (PINB & (1<<0)) 
+                    {
+                        ReportData->Button |= SWITCH_ZR;
+                    }
+
+                    //D0_C7 // R // Reset Camera (Y)
+                    if (PINC & (1<<7)) 
+                    {
+                        ReportData->Button |= SWITCH_Y;
+                    }
+
+                    //D1_C5 // SPACE // Jump (B)
+                    if (PINC & (1<<5)) 
+                    {
+                        ReportData->Button |= SWITCH_B;
+                    }
+
+                    //D2_C3 // I // A ((look_down))
+                    if (PINC & (1<<3)) 
+                    {
+                        //ReportData->RY = STICK_MIN;
+                        ReportData->Button |= SWITCH_X;
+                    }
+
+                    //D3_C1 // K // Map ((look_down))
+                    if (PINC & (1<<1)) 
+                    {
+                        //ReportData->RY = STICK_MAX;
+                        ReportData->Button |= SWITCH_A;
+                    }
+
+                    //D4_E1 // Q (sub) strafe left
+                    if (PINE & (1<<1)) 
+                    {
+                        ReportData->LX = STICK_MIN;
+                    }
+
+                    //D5_D7 // E (sub) strafe right
+                    if (PIND & (1<<7)) 
+                    {
+                        ReportData->LX = STICK_MAX;
+                    }
+
+                    //D6_D5 // U (sub)
+                    if (PIND & (1<<5)) 
+                    {
+                        ReportData->Button |= SWITCH_R;
+                    }
+
+                    //D7_D3 // M (special)
+                    if (PIND & (1<<3)) 
+                    {
+                        ReportData->Button |= SWITCH_RCLICK;
+                    }
 
                     break;
                 case BLINK:
