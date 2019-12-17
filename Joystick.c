@@ -347,7 +347,7 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     //A1_F4 // A // TURN_LEFT
                     if (PINF & (1<<4)) 
                     {
-                        ReportData->RX = STICK_MIN;
+                        ReportData->LX = STICK_MIN;
                     }
 
                     //A2_F1 // S // BACK
@@ -359,7 +359,7 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     //A3_E6 // D // TURN_RIGHT
                     if (PINE & (1<<6)) 
                     {
-                        ReportData->RX = STICK_MAX;
+                        ReportData->LX = STICK_MAX;
                     }
 
                     //A5_B2 // F // Squid/Walk
@@ -381,10 +381,11 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                         ReportData->Button |= SWITCH_ZR;
                     }
 
-                    //D0_C7 // R // Reset Camera (Y)
+                    //D0_C7 // R // Reset Camera (Y) // Confirm (A)
                     if (PINC & (1<<7)) 
                     {
-                        ReportData->Button |= SWITCH_Y;
+                        //ReportData->Button |= SWITCH_Y;
+                        ReportData->Button |= SWITCH_A;
                     }
 
                     //D1_C5 // SPACE // Jump (B)
@@ -396,31 +397,31 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     //D2_C3 // I // X (Map)
                     if (PINC & (1<<3)) 
                     {
-                        //ReportData->RY = STICK_MIN;
-                        ReportData->Button |= SWITCH_X;
+                        ReportData->RY = STICK_MIN;
+                        //ReportData->Button |= SWITCH_X;
                     }
 
                     //D3_C1 // K // A
                     if (PINC & (1<<1)) 
                     {
-                        //ReportData->RY = STICK_MAX;
-                        ReportData->Button |= SWITCH_A;
+                        ReportData->RY = STICK_MAX;
+                        //ReportData->Button |= SWITCH_A;
                     }
 
                     // HATS for left buttons (BOOYA, etc)
                     //ReportData->HAT = HAT_TOP
                     //ReportData->HAT = HAT_BOTTOM
 
-                    //D4_E1 // Q (sub) strafe left
+                    //D4_E1 // Q left
                     if (PINE & (1<<1)) 
                     {
-                        ReportData->LX = STICK_MIN;
+                        ReportData->RX = STICK_MIN;
                     }
 
-                    //D5_D7 // E (sub) strafe right
+                    //D5_D7 // E right
                     if (PIND & (1<<7)) 
                     {
-                        ReportData->LX = STICK_MAX;
+                        ReportData->RX = STICK_MAX;
                     }
 
                     //D6_D5 // U (sub)

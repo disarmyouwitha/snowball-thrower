@@ -6,7 +6,13 @@ import pynput.keyboard as kb
 from pynput.mouse import Button, Controller
 from pynput.keyboard import Key, Controller
 
+# Can write config / translation here.. WASD is actual hard-coded values we should send..
+# Eventually we can get rid of all of these pins and communicate (Computer)<->Serial<->Serial<->(Switch) 
+# and we can implement the Joystick.c logic at this level (or higher) sending only basic ReportData commands to the switch (up, down, left, etc)
+
 class omni_listener():
+    _SERIAL = False #True
+
     # [CONTROLLERS]:
     _ms_ctrl = None # (Because pyautogui can't click to a non-active window)
     _kb_ctrl = None # (Might replace with pyautogui keyUp/keyDown so we don't have to load this controller.. need to check support on osx/win)
@@ -15,9 +21,9 @@ class omni_listener():
     _last_click = 0
     _last_int_x = None
     _last_int_y = None
-    _SERIAL = False
 
     # [KEYBOARD GLOBALS]:
+    _KEY_MAP = None
     _last_typed = 0
     _hold_ESC = False
     _hold_ALT = False
@@ -33,6 +39,27 @@ class omni_listener():
         self.mouse_listener = ms.Listener(on_click=self.on_click, on_move=self.on_move, on_scroll=self.on_scroll)
         self.keyboard_listener = kb.Listener(on_press=self.on_press, on_release=self.on_release)
         # ^(non-blocking mouse/keyboard listener)
+
+        # Change first column to remap key:
+        self._KEY_MAP = {
+            'W': 'W',     # W| up
+            'A': 'A',     # A| down
+            'S': 'S',     # S| left
+            'D': 'D',     # D| right
+            'J': 'J',     # J| Fire!
+            'F': 'F',     # F| Squid/Walk toggle
+            'R': 'R',     # R| Reset Camera // // (A, Confirm)
+            ' ': ' ',     #  | JUMP (B)
+            'I': 'I',     # I| Look Up   // (X, Map) 
+            'K': 'K',     # K| Look Down // (A, Confirm)
+            'Q': 'Q',     # Q| Look Left
+            'E': 'E',     # E| Look Right
+            'U': 'U',     # U| sub
+            'M': 'M'      # M| special
+        }
+
+        if self._SERIAL:
+            self._SERIAL = serial.Serial('/dev/cu.usbmodem1421')  # open serial port
 
     # [Mouse position at 0,0 is emergency exit condition]:
     def CHECK_MOUSE_EMERGENCY(self, _int_x, _int_y):
@@ -68,34 +95,33 @@ class omni_listener():
     # [NEEDS helper function]: # _handle_special_keys()
     def on_press(self, key):
         try:
-            _key = key.char
-            self._last_typed = time.time()
-            print(_key)
+            #self._last_typed = time.time()
+            key = key.char
+            _key = self._KEY_MAP[key.upper()]
+            #print('{0} => {1}'.format(key, _key))
 
             # [Send UPPER on key press]:
             if self._SERIAL:
-                ser.write(bytearray(key.char.upper(), 'utf-8'))
-                line = ser.readline()
+                self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
+                line = self._SERIAL.readline()
                 print(line)
-
-            # [If _held_keys treat as char in sequence]:
-            _held_keys = self._held_keys()
-            _held_cnt = len(_held_keys)
-            if _held_cnt >= 2:
-                print('HELD_KEYS')
-
-        except AttributeError: 
-            print('special key {0} pressed'.format(key))
-            # ^DEBUGG
-
+        except Exception as e:
             self._last_typed = 0 #time.time()
 
-            # [If ESC key pressed]:
-            if key == kb.Key.esc:
-                self._hold_ESC = True
-                print('[Listeners "stopped"]')
+            if key == kb.Key.space:
+                _key = self._KEY_MAP[' ']
+                #print('{0} => {1}'.format(key, _key))
 
-            self._handle_special_press(key)
+                # [Send UPPER on key press]:
+                if self._SERIAL:
+                    self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
+            else:
+                print('[UNMAPPED KEY {0} PRESSED]'.format(key))
+                # ^DEBUGG
+
+            #self._handle_special_press(key)
 
     def _handle_special_press(self, key):
         _pass_thru = False
@@ -177,10 +203,14 @@ class omni_listener():
         self._handle_special_release(key)
 
         try:
-            print(key.char)
+            key = key.char
+            _key = self._KEY_MAP[key.upper()]
+
+            print(_key.lower())
+
             if self._SERIAL:
-                ser.write(bytearray(key.char.lower(), 'utf-8'))
-                line = ser.readline()
+                self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                line = self._SERIAL.readline()
                 print(line)
         except:
             pass
@@ -207,49 +237,75 @@ class omni_listener():
         _int_x = int(x)
         _int_y = int(y)
 
-        if pressed:
-            self._last_int_x = int(x)
-            self._last_int_y = int(y)
-
-        if pressed:
-            print('[PRESSED!]')
-
         # [Determine left/right click]:
-        if button==Button.left:
-            print('LEFT_CLICK')
-        elif button==Button.right:
-            print('RIGHT_CLICK')
-        else:
-            print('OTHER_CLICK')
+        #if button==Button.left:
+        #    print('LEFT_CLICK')
+        #elif button==Button.right:
+        #    print('RIGHT_CLICK')
+        #    # RE-CENTER VIEW.. Frees up R key?
+        #else:
+        #    print('OTHER_CLICK')
 
-            # [SAME = CLICK | DIFF = BOX]:
-            if abs(_int_x-self._last_int_x) < 5 and abs(_int_y-self._last_int_y) < 5:
-                # [Keep track of last click / tell difference between single/double click]:
-                if self._last_click == 0:
-                    self._last_click = time.time()
-                    _click_cnt = 1
-                else:
-                    if (time.time() - self._last_click) >= .5:
-                        _click_cnt = 1
-                        self._last_click = time.time()
-                        print('SINGLE_CLICK')
-                    else:
-                        _click_cnt = 2
-                        self._last_click = 0
-                        print('DOUBLE_CLICK')
-            '''
-            else:
-                if _int_x > self._last_int_x:
-                    _which_box = 'ssim-box'
-                else:
-                    _which_box = 'drag-box'
-            '''
+        # [Determine click/release]:
+        if pressed:
+            _key = self._KEY_MAP['J']
+            print('{0}| FIRE ON!'.format(_key))
+            if self._SERIAL:
+                self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
+                line = self._SERIAL.readline()
+                print(line)
+        else:
+            _key = self._KEY_MAP['J']
+            print('{0}| FIRE OFF!'.format(_key))
+            if self._SERIAL:
+                self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                line = self._SERIAL.readline()
+                print(line)
 
     def on_move(self, x, y):
         _int_x = int(x)
         _int_y = int(y)
+        #print('X: {0} | Y: {1}'.format(_int_x, _int_y))
+
+        # [Mouse Controlls]:
+        if self._last_int_x:
+            # [X]:
+            if self._last_int_x > _int_x:
+                _key = self._KEY_MAP['Q']
+                print('{0}| LOOKING LEFT'.format(_key))
+            elif self._last_int_x < _int_x:
+                _key = self._KEY_MAP['E']
+                print('{0}| LOOKING RIGHT'.format(_key))
+            else:
+                _key = None
+
+            # [Report key for X movement]:
+            if _key is not None:
+                if self._SERIAL:
+                    self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
+
+            # [Y]:
+            if self._last_int_y > _int_y:
+                _key = self._KEY_MAP['I']
+                print('{0}| LOOKING UP'.format(_key))
+            elif self._last_int_y < _int_y:
+                _key = self._KEY_MAP['K']
+                print('{0}| LOOKING DOWN'.format(_key))
+            else:
+                _key = None
+
+            # [Report key for Y movement]:
+            if _key is not None:
+                if self._SERIAL:
+                    self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
 
         self.CHECK_MOUSE_EMERGENCY(_int_x, _int_y)
+        self._last_int_x = int(x)
+        self._last_int_y = int(y)
 
     def on_scroll(self, x, y, dx, dy):
         _int_x = int(x)
@@ -259,4 +315,4 @@ class omni_listener():
 
         self.CHECK_MOUSE_EMERGENCY(_int_x, _int_y)
 
-        print('scroll|{0}'.format(_int_dy))
+        #print('scroll|{0}'.format(_int_dy))
