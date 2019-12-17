@@ -6,8 +6,9 @@ import contextlib
 import omni_listener
 
 # [SERIAL]:
-#https://docs.particle.io/support/particle-devices-faq/photon-serial2-faq/#using-the-serial-port
-#https://www.pjrc.com/teensy/td_uart.html
+# https://docs.particle.io/support/particle-devices-faq/photon-serial2-faq/#using-the-serial-port
+# https://www.pjrc.com/teensy/td_uart.html
+# https://community.particle.io/t/serial-tutorial/26946
 
 # HATS for Joystick.c (Left buttons, BOOYA, etc)
 '''
