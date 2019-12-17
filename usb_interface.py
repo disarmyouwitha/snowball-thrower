@@ -10,6 +10,7 @@ import omni_listener
 # https://www.pjrc.com/teensy/td_uart.html
 # https://community.particle.io/t/serial-tutorial/26946
 # https://forum.pjrc.com/threads/32502-Serial2-Alternate-pins-26-and-31
+# pjrc.com/teensy/uart.html
 
 # Can write config / translation here.. WASD is actual hard-coded values we should send..
 
