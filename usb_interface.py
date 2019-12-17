@@ -5,6 +5,8 @@ import serial
 import contextlib
 import omni_listener
 
+#https://docs.particle.io/support/particle-devices-faq/photon-serial2-faq/#using-the-serial-port
+
 # HATS for Joystick.c (Left buttons, BOOYA, etc)
 '''
 # https://github.com/LightningStalker/Splatmeme-Printer/blob/master/Joystick.c
