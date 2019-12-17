@@ -9,18 +9,25 @@ import omni_listener
 # https://docs.particle.io/support/particle-devices-faq/photon-serial2-faq/#using-the-serial-port
 # https://www.pjrc.com/teensy/td_uart.html
 # https://community.particle.io/t/serial-tutorial/26946
+# https://forum.pjrc.com/threads/32502-Serial2-Alternate-pins-26-and-31
 
-# HATS for Joystick.c (Left buttons, BOOYA, etc)
+# Can write config / translation here.. WASD is actual hard-coded values we should send..
+
 '''
-# https://github.com/LightningStalker/Splatmeme-Printer/blob/master/Joystick.c
-if (ReportData->HAT == HAT_RIGHT)
-	xpos++;
-else if (ReportData->HAT == HAT_LEFT)
-	xpos--;
-else if (ReportData->HAT == HAT_TOP)
-	ypos--;
-else if (ReportData->HAT == HAT_BOTTOM)
-	ypos++;
+int A0_F6 = A0; // W
+int A1_F4 = A1; // A
+int A2_F1 = A2; // S
+int A3_E6 = A3; // D
+int A4_B0 = A4; // J
+int A5_B2 = A5; // F
+int D0_C7 = D0; // R
+int D1_C5 = D1; // SPACE
+int D2_C3 = D2; // I (Look Up)
+int D3_C1 = D3; // K (Look Down)
+int D4_E1 = D4; // Q (sub) strafe left
+int D5_D7 = D5; // E (sub) strafe right
+int D6_D5 = D6; // U (sub)
+int D7_D3 = D7; // M (special)
 '''
 
 # [Neat helper function for timing operations!]:
@@ -31,8 +38,7 @@ def timer(msg):
     end = time.time()
     print('%s: %.02fms'%(msg, (end-start)*1000))
 
-if _SERIAL:
-    ser = serial.Serial('/dev/cu.usbmodem1421')  # open serial port
+ser = serial.Serial('/dev/cu.usbmodem1421')  # open serial port
 
 # Add Mouse controller code!
 # Add ENUM for PIN names 
@@ -57,4 +63,4 @@ if __name__ == "__main__":
     # [Start non-blocking listener]:
     #listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     #listener.start()
-    #listener.join()
+    #listener.join()w

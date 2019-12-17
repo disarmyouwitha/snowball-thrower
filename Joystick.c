@@ -393,19 +393,23 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                         ReportData->Button |= SWITCH_B;
                     }
 
-                    //D2_C3 // I // A ((look_down))
+                    //D2_C3 // I // X (Map)
                     if (PINC & (1<<3)) 
                     {
                         //ReportData->RY = STICK_MIN;
                         ReportData->Button |= SWITCH_X;
                     }
 
-                    //D3_C1 // K // Map ((look_down))
+                    //D3_C1 // K // A
                     if (PINC & (1<<1)) 
                     {
                         //ReportData->RY = STICK_MAX;
                         ReportData->Button |= SWITCH_A;
                     }
+
+                    // HATS for left buttons (BOOYA, etc)
+                    //ReportData->HAT = HAT_TOP
+                    //ReportData->HAT = HAT_BOTTOM
 
                     //D4_E1 // Q (sub) strafe left
                     if (PINE & (1<<1)) 
