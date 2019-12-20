@@ -2,9 +2,9 @@
 Nintendo Switch Fightstick - Proof-of-Concept
 
 Based on the LUFA library's Low-Level Joystick Demo
-	(C) Dean Camera
+  (C) Dean Camera
 Based on the HORI's Pokken Tournament Pro Pad design
-	(C) HORI
+  (C) HORI
 
 This project implements a modified version of HORI's Pokken Tournament Pro Pad
 USB descriptors to allow for the creation of custom controllers for the
@@ -18,28 +18,7 @@ exception of Home and Capture. Descriptor modification allows us to unlock
 these buttons for our use.
 */
 
-#include <avr/io.h>
-#include <avr/pgmspace.h>
-#include <stdint.h>
-#include "uart.h"
-#include "Joystick.h"
-
-#define BAUD_RATE 9600
-
-#define CPU_PRESCALE(n) (CLKPR = 0x80, CLKPR = (n))
-
-// write a string to the uart
-#define uart_print(s) uart_print_P(PSTR(s))
-void uart_print_P(const char *str)
-{
-	char c;
-	while (1) {
-		c = pgm_read_byte(str++);
-		if (!c) break;
-		uart_putchar(c);
-	}
-}
-
+#include "../Joystick.h"
 
 // Teensy++ 2.0 has the LED on pin 6
 
@@ -66,12 +45,12 @@ typedef enum {
     SHOOT, ZR,
     SWIM_UP, SWIM_DOWN, SWIM_LEFT, SWIM_RIGHT,
     READ_INPUT,
-    RESET
+    BLINK, LED_ON, LED_OFF
 } Buttons_t;
 
 typedef struct {
-	Buttons_t button;
-	uint16_t duration;
+  Buttons_t button;
+  uint16_t duration;
 } command;
 
 // [Bot Instructions]:
@@ -147,24 +126,21 @@ void SetupHardware(void)
     // We need to disable clock division before initializing the USB hardware.
     clock_prescale_set(clock_div_1);
 
-    CPU_PRESCALE(0);  // run at 16 MHz
-    uart_init(BAUD_RATE);
-
     // [We can then initialize our hardware and peripherals, including the USB stack]:
-    //DDRB  = 0x00; // Configure Direction: 0=Input, 1=Output
-    //PORTB = 0x0; // Config Input (when DDRx=0): 0=Normal, 1=Pullup Resistor
+    DDRB  = 0x00; // Configure Direction: 0=Input, 1=Output
+    PORTB = 0x0; // Config Input (when DDRx=0): 0=Normal, 1=Pullup Resistor
 
-    //DDRC  = 0x00; //0xFF; //Teensy uses PORTD
-    //PORTC = 0x0;
+    DDRC  = 0x00; //0xFF; //Teensy uses PORTD
+    PORTC = 0x0;
 
-    //DDRD  = 0x00; //0xFF; //Teensy uses PORTD
-    //PORTD = 0x0;
+    DDRD  = 0x00; //0xFF; //Teensy uses PORTD
+    PORTD = 0x0;
 
-    //DDRE  = 0x00; //0xFF; //Teensy uses PORTD
-    //PORTE = 0x0;
+    DDRE  = 0x00; //0xFF; //Teensy uses PORTD
+    PORTE = 0x0;
 
-    //DDRF  = 0x00; //0xFF; //Teensy uses PORTD
-    //PORTF = 0x0;
+    DDRF  = 0x00; //0xFF; //Teensy uses PORTD
+    PORTF = 0x0;
 
     // The USB stack should be initialized last.
     USB_Init();
@@ -362,46 +338,16 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     ReportData->Button |= SWITCH_L | SWITCH_R;
                     break;
                 case READ_INPUT:
-                    if (uart_available())
-                    {
-                        uint8_t c = uart_getchar();
-
-                        if (c==119) //w // LSTICK_UP
-                        {
-                            ReportData->LY = STICK_MIN;
-                        }
-
-                        if (c==97) //a // LSTICK_LEFT
-                        {
-                            ReportData->LX = STICK_MIN;
-                        }
-
-                        if (c==115) //s // LSTICK_DOWN
-                        {
-                            ReportData->LY = STICK_MAX;
-                        }
-
-                        if (c==100) //d // LSTICK_RIGHT
-                        {
-                            ReportData->LX = STICK_MAX;
-                        }
-
-                        // ACK:
-                        uart_putchar(c);
-                        uart_putchar('\r');
-                        uart_putchar('\n');
-                    }
-                    /*
                     //A0_F6 // W // FORWARD
                     if (PINF & (1<<6)) 
                     {
                         ReportData->LY = STICK_MIN;
                     }
 
-                    //A1_F4 // A // LEFT
+                    //A1_F4 // A // TURN_LEFT
                     if (PINF & (1<<4)) 
                     {
-                        ReportData->LX = STICK_MIN;
+                        ReportData->RX = STICK_MIN;
                     }
 
                     //A2_F1 // S // BACK
@@ -410,10 +356,10 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                         ReportData->LY = STICK_MAX;
                     }
 
-                    //A3_E6 // D // RIGHT
+                    //A3_E6 // D // TURN_RIGHT
                     if (PINE & (1<<6)) 
                     {
-                        ReportData->LX = STICK_MAX;
+                        ReportData->RX = STICK_MAX;
                     }
 
                     //A5_B2 // F // Squid/Walk
@@ -435,11 +381,10 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                         ReportData->Button |= SWITCH_ZR;
                     }
 
-                    //D0_C7 // R // Reset Camera (Y) // Confirm (A)
+                    //D0_C7 // R // Reset Camera (Y)
                     if (PINC & (1<<7)) 
                     {
-                        //ReportData->Button |= SWITCH_Y;
-                        ReportData->Button |= SWITCH_A;
+                        ReportData->Button |= SWITCH_Y;
                     }
 
                     //D1_C5 // SPACE // Jump (B)
@@ -451,30 +396,31 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     //D2_C3 // I // X (Map)
                     if (PINC & (1<<3)) 
                     {
-                        ReportData->RY = STICK_MIN;
-                        //ReportData->Button |= SWITCH_X;
+                        //ReportData->RY = STICK_MIN;
+                        ReportData->Button |= SWITCH_X;
                     }
 
                     //D3_C1 // K // A
                     if (PINC & (1<<1)) 
                     {
-                        ReportData->RY = STICK_MAX;
-                        //ReportData->Button |= SWITCH_A;
+                        //ReportData->RY = STICK_MAX;
+                        ReportData->Button |= SWITCH_A;
                     }
 
                     // HATS for left buttons (BOOYA, etc)
                     //ReportData->HAT = HAT_TOP
                     //ReportData->HAT = HAT_BOTTOM
 
-                    if (PINE & (1<<1)) //D4_E1 // Q left
+                    //D4_E1 // Q (sub) strafe left
+                    if (PINE & (1<<1)) 
                     {
-                        ReportData->RX = 32;//STICK_MIN;//64
-                    } else if (PIND & (1<<7)) //D5_D7 // E right
+                        ReportData->LX = STICK_MIN;
+                    }
+
+                    //D5_D7 // E (sub) strafe right
+                    if (PIND & (1<<7)) 
                     {
-                        ReportData->RX = 225;//STICK_MAX;192
-                    } else {
-                        ReportData->RX = STICK_CENTER;
-                        //ReportData->RY = STICK_CENTER;
+                        ReportData->LX = STICK_MAX;
                     }
 
                     //D6_D5 // U (sub)
@@ -488,9 +434,18 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     {
                         ReportData->Button |= SWITCH_RCLICK;
                     }
-                    */
 
                     break;
+                case BLINK:
+                    if (PINB & (1<<2)) 
+                    {
+                        /* Pin B2 is High */
+                        portsval = ~portsval;
+                        PORTD = portsval; // flash LED(s) and sound buzzer if attached
+                        _delay_ms(250);
+                    } else {
+                        /* Pin D2 is Low */
+                    }
                 default:
                     ReportData->LX = STICK_CENTER;
                     ReportData->LY = STICK_CENTER;
@@ -500,9 +455,6 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     break;
             }
 
-            
-
-            /*
             duration_count++;
 
             if (duration_count > step[bufindex].duration)
@@ -522,7 +474,6 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                 ReportData->RY = STICK_CENTER;
                 ReportData->HAT = HAT_CENTER;
             }
-            */
             break;
 
         case CLEANUP:
