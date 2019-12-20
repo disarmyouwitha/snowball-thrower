@@ -344,7 +344,7 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                         ReportData->LY = STICK_MIN;
                     }
 
-                    //A1_F4 // A // TURN_LEFT
+                    //A1_F4 // A // LEFT
                     if (PINF & (1<<4)) 
                     {
                         ReportData->LX = STICK_MIN;
@@ -356,7 +356,7 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                         ReportData->LY = STICK_MAX;
                     }
 
-                    //A3_E6 // D // TURN_RIGHT
+                    //A3_E6 // D // RIGHT
                     if (PINE & (1<<6)) 
                     {
                         ReportData->LX = STICK_MAX;
@@ -412,16 +412,15 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     //ReportData->HAT = HAT_TOP
                     //ReportData->HAT = HAT_BOTTOM
 
-                    //D4_E1 // Q left
-                    if (PINE & (1<<1)) 
+                    if (PINE & (1<<1)) //D4_E1 // Q left
                     {
-                        ReportData->RX = STICK_MIN;
-                    }
-
-                    //D5_D7 // E right
-                    if (PIND & (1<<7)) 
+                        ReportData->RX = 32;//STICK_MIN;//64
+                    } else if (PIND & (1<<7)) //D5_D7 // E right
                     {
-                        ReportData->RX = STICK_MAX;
+                        ReportData->RX = 225;//STICK_MAX;192
+                    } else {
+                        ReportData->RX = STICK_CENTER;
+                        //ReportData->RY = STICK_CENTER;
                     }
 
                     //D6_D5 // U (sub)

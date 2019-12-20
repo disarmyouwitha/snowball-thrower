@@ -1,17 +1,26 @@
 import os
 import sys
 import time
-import serial
-import contextlib
 import omni_listener
 
-# [Neat helper function for timing operations!]:
-@contextlib.contextmanager
-def timer(msg):
-    start = time.time()
-    yield
-    end = time.time()
-    print('%s: %.02fms'%(msg, (end-start)*1000))
+# Currently there isn't software support to enable the alternates, but it is possible to make the signals appear on those pins with some direct register writes.
+#define CORE_PIN_CONFIG(pin)  (CORE_PIN##pin##_CONFIG)
+#define pinAlt(pin, alt)      {CORE_PIN_CONFIG(pin) = PORT_PCR_DSE | PORT_PCR_MUX(alt);}
+
+'''
+CORE_PIN7_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);
+CORE_PIN8_CONFIG = PORT_PCR_MUX(2);
+CORE_PIN14_CONFIG = PORT_PCR_DSE | PORT_PCR_MUX(2);
+'''
+
+# Serial1.setTX(pin)
+# Serial1.setRX(pin)
+# void transmitterEnable(uint8_t pin);
+
+'''
+Note, RTS can be any pin, but in the current library, CTS must be a fixed pin:
+Serial1: pins 18 or 20;
+'''
 
 # [1]: Talk to Atmel over VIN/serial with PIN"
 #      # https://docs.particle.io/support/particle-devices-faq/photon-serial2-faq/#using-the-serial-port
@@ -30,4 +39,5 @@ if __name__ == "__main__":
     with _OMNI.mouse_listener, _OMNI.keyboard_listener:
         print('[Mouse/Keyboard listening! Press ESC to stop]')
         while True:
-            time.sleep(1) #pass (?)
+            _OMNI.program_clock()
+            time.sleep(.1) #pass (?)

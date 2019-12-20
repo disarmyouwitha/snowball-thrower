@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+import serial
+import contextlib
 import pynput.mouse as ms
 import pynput.keyboard as kb
 from pynput.mouse import Button, Controller
@@ -10,14 +12,28 @@ from pynput.keyboard import Key, Controller
 # Eventually we can get rid of all of these pins and communicate (Computer)<->Serial<->Serial<->(Switch) 
 # and we can implement the Joystick.c logic at this level (or higher) sending only basic ReportData commands to the switch (up, down, left, etc)
 
+# [Neat helper function for timing operations!]:
+@contextlib.contextmanager
+def timer(msg):
+    start = time.time()
+    yield
+    end = time.time()
+    print('%s: %.02fms'%(msg, (end-start)*1000))
+
+# ^(On-click or key-press start the timer for that specific key)
+# ^(On-release end the timer for that specific key / record key&duration)
+# with timer('boo'):
+#   print('booya!')
+
 class omni_listener():
-    _SERIAL = False #True
+    _SERIAL = True #False
 
     # [CONTROLLERS]:
     _ms_ctrl = None # (Because pyautogui can't click to a non-active window)
     _kb_ctrl = None # (Might replace with pyautogui keyUp/keyDown so we don't have to load this controller.. need to check support on osx/win)
 
     # [MOUSE GLOBALS]:
+    _last_moved = 0
     _last_click = 0
     _last_int_x = None
     _last_int_y = None
@@ -25,6 +41,7 @@ class omni_listener():
     # [KEYBOARD GLOBALS]:
     _KEY_MAP = None
     _last_typed = 0
+    _last_key = None
     _hold_ESC = False
     _hold_ALT = False
     _hold_TAB = False
@@ -54,17 +71,27 @@ class omni_listener():
             'K': 'K',     # K| Look Down // (A, Confirm)
             'Q': 'Q',     # Q| Look Left
             'E': 'E',     # E| Look Right
-            'U': 'U',     # U| sub
+            'U': 'U',     # U| sub // Right-click
             'M': 'M'      # M| special
         }
 
         if self._SERIAL:
-            self._SERIAL = serial.Serial('/dev/cu.usbmodem1421')  # open serial port
+            try:
+                self._SERIAL = serial.Serial('/dev/cu.usbmodem1421')  # open serial port
+            except:
+                self._SERIAL = serial.Serial('/dev/cu.usbmodem1411')  # open serial port
 
     # [Mouse position at 0,0 is emergency exit condition]:
     def CHECK_MOUSE_EMERGENCY(self, _int_x, _int_y):
         if _int_x == 0 and _int_y == 0:
             print('[MOUSE_PANIC_EXIT]')
+
+            # Send LOW for all pins when exiting:
+            for _key in self._KEY_MAP:
+                if self._SERIAL:
+                    self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
             os._exit(1)
 
     def CLICK(self, which_click='left', num_clicks=1, type_click='click'):
@@ -206,7 +233,7 @@ class omni_listener():
             key = key.char
             _key = self._KEY_MAP[key.upper()]
 
-            print(_key.lower())
+            #print(_key.lower())
 
             if self._SERIAL:
                 self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
@@ -238,70 +265,116 @@ class omni_listener():
         _int_y = int(y)
 
         # [Determine left/right click]:
-        #if button==Button.left:
-        #    print('LEFT_CLICK')
-        #elif button==Button.right:
-        #    print('RIGHT_CLICK')
-        #    # RE-CENTER VIEW.. Frees up R key?
-        #else:
-        #    print('OTHER_CLICK')
-
-        # [Determine click/release]:
-        if pressed:
-            _key = self._KEY_MAP['J']
-            print('{0}| FIRE ON!'.format(_key))
-            if self._SERIAL:
-                self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
-                line = self._SERIAL.readline()
-                print(line)
+        if button==Button.left:
+            print('LEFT_CLICK: (Fire)')
+            # [Determine click/release]:
+            if pressed:
+                _key = self._KEY_MAP['J']
+                #print('{0}| FIRE ON!'.format(_key))
+                if self._SERIAL:
+                    self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
+            else:
+                _key = self._KEY_MAP['J']
+                #print('{0}| FIRE OFF!'.format(_key))
+                if self._SERIAL:
+                    self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
+        elif button==Button.right:
+            print('RIGHT_CLICK: (Sub-weapon)')
+            # [Determine click/release]:
+            if pressed:
+                _key = self._KEY_MAP['U']
+                if self._SERIAL:
+                    self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
+            else:
+                _key = self._KEY_MAP['U']
+                if self._SERIAL:
+                    self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
         else:
-            _key = self._KEY_MAP['J']
-            print('{0}| FIRE OFF!'.format(_key))
-            if self._SERIAL:
-                self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
-                line = self._SERIAL.readline()
-                print(line)
+            print('OTHER_CLICK')
+            # RE-CENTER VIEW?
+
+    def program_clock(self):
+        if self._last_moved == 0:
+            self._last_moved = time.time()
+        else:
+            if (time.time() - self._last_moved >= .1): # After .1 second delay, stop movement direction of camera: (hopefully)
+                self._last_moved = time.time()
+
+                if self._SERIAL and self._last_key is not None:
+                    print('SERIAL SEND: ')
+                    _key = self._KEY_MAP['Q']
+                    self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
+                    _key = self._KEY_MAP['E']
+                    self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                    line = self._SERIAL.readline()
+                    print(line)
+                    self._last_key = None
+            elif (time.time() - self._last_moved) < 3:
+                pass
+                #print('last_moved updated')
 
     def on_move(self, x, y):
         _int_x = int(x)
         _int_y = int(y)
+        self._last_moved = time.time()
         #print('X: {0} | Y: {1}'.format(_int_x, _int_y))
+
+        if self._last_int_x is not None:
+            _diff = abs(self._last_int_x - _int_x)
+            if _diff < 20:
+                print('_diff (little): {0}'.format(_diff))
+            elif _diff < 100: 
+                print('_diff (big): {0}'.format(_diff))
 
         # [Mouse Controlls]:
         if self._last_int_x:
             # [X]:
             if self._last_int_x > _int_x:
                 _key = self._KEY_MAP['Q']
-                print('{0}| LOOKING LEFT'.format(_key))
+                #print('{0}| LOOKING LEFT'.format(_key))
             elif self._last_int_x < _int_x:
                 _key = self._KEY_MAP['E']
-                print('{0}| LOOKING RIGHT'.format(_key))
-            else:
-                _key = None
+                #print('{0}| LOOKING RIGHT'.format(_key))
 
-            # [Report key for X movement]:
-            if _key is not None:
-                if self._SERIAL:
-                    self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
-                    line = self._SERIAL.readline()
-                    print(line)
+            try:
+                # [Report key for X movement]:
+                if _key is not None:
+                    self._last_key = _key
+                    if self._SERIAL:
+                        self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
+                        line = self._SERIAL.readline()
+                        #print(line)
+            except:
+                pass
 
+            '''
             # [Y]:
             if self._last_int_y > _int_y:
                 _key = self._KEY_MAP['I']
-                print('{0}| LOOKING UP'.format(_key))
+                #print('{0}| LOOKING UP'.format(_key))
             elif self._last_int_y < _int_y:
                 _key = self._KEY_MAP['K']
-                print('{0}| LOOKING DOWN'.format(_key))
+                #print('{0}| LOOKING DOWN'.format(_key))
             else:
                 _key = None
 
             # [Report key for Y movement]:
             if _key is not None:
                 if self._SERIAL:
-                    self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
+                    self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
                     line = self._SERIAL.readline()
                     print(line)
+            '''
 
         self.CHECK_MOUSE_EMERGENCY(_int_x, _int_y)
         self._last_int_x = int(x)
