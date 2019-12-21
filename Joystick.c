@@ -23,6 +23,7 @@ these buttons for our use.
 #include <stdint.h>
 #include "uart.h"
 #include "Joystick.h"
+#include <stdbool.h>
 
 #define BAUD_RATE 9600
 
@@ -77,11 +78,6 @@ typedef struct {
 // [Bot Instructions]:
 static const command step[] = 
 {
-    // Need to be able to send combo commands like:
-    //{ [LSTICK_UP,SHOOT]  200 },
-    //Instead of SWIM_UP use?:
-    //{ [SQUID ,LSTICK_UP]  200 },
- 
     // [Setup controller[:]
     { NOTHING,      250 },
     { TRIGGERS,       5 },
@@ -115,6 +111,7 @@ static const command step[] =
     { SQUID,        200 }, // Hide!
     */
     { READ_INPUT,   200 }
+    //{ READ_INPUT,   20 }
     /*
     //{ RSTICK_LEFT,   10 }, // Turn camera (about) 90 degrees LEFT
     //{ UP,        30 }, // Move forward 30 (about) 1 lines in test area
@@ -122,6 +119,68 @@ static const command step[] =
     //{ UP,        90 }, // Move Forward 90 (about) 3 lines in test area
     */
 };
+
+bool W_bool = false;
+bool A_bool = false;
+bool S_bool = false;
+bool D_bool = false;
+bool E_bool = false;
+bool F_bool = false; int _SQUID_OR_WALK = 0;
+bool J_bool = false;
+bool R_bool = false;
+bool I_bool = false;
+bool K_bool = false;
+bool Q_bool = false;
+bool U_bool = false;
+bool M_bool = false;
+bool SPACE_bool = false;
+bool BOOYA_bool = false;
+int MOUSE_SPEED = 0;
+// HATS for left buttons (BOOYA, etc)
+void set_bool(char c)
+{
+    // Set ONs:
+    if (c == 'W') { W_bool = true; }
+    if (c == 'A') { A_bool = true; }
+    if (c == 'S') { S_bool = true; }
+    if (c == 'D') { D_bool = true; }
+    if (c == 'E') { E_bool = true; }
+    if (c == 'F') { _SQUID_OR_WALK = ~_SQUID_OR_WALK; }
+    if (c == 'J') { J_bool = true; }
+    if (c == 'R') { R_bool = true; }
+    if (c == 'I') { I_bool = true; }
+    if (c == 'K') { K_bool = true; }
+    if (c == 'Q') { Q_bool = true; }
+    if (c == 'U') { U_bool = true; }
+    if (c == 'M') { M_bool = true; }
+    if (c == ' ') { SPACE_bool = true; }
+
+    // Set OFFs:
+    if (c == 'w') { W_bool = false; }
+    if (c == 'a') { A_bool = false; }
+    if (c == 's') { S_bool = false; }
+    if (c == 'd') { D_bool = false; }
+    if (c == 'e') { E_bool = false; }
+    //if (c == 'f') { F_bool = false; }
+    if (c == 'j') { J_bool = false; }
+    if (c == 'r') { R_bool = false; }
+    if (c == 'i') { I_bool = false; }
+    if (c == 'k') { K_bool = false; }
+    if (c == 'q') { Q_bool = false; }
+    if (c == 'u') { U_bool = false; }
+    if (c == 'm') { M_bool = false; }
+
+    // Set MOUSE_SPEED:
+    if (c == '1') { MOUSE_SPEED = 1; }
+    if (c == '2') { MOUSE_SPEED = 2; }
+    if (c == '3') { MOUSE_SPEED = 3; }
+    if (c == '4') { MOUSE_SPEED = 4; }
+    if (c == '5') { MOUSE_SPEED = 5; }
+    if (c == '6') { MOUSE_SPEED = 6; }
+    if (c == '7') { MOUSE_SPEED = 7; }
+    if (c == '8') { MOUSE_SPEED = 8; }
+    if (c == '9') { MOUSE_SPEED = 9; }
+}
 
 uint8_t incomingByte = 0;
 
@@ -131,21 +190,18 @@ int main(void)
     SetupHardware();            // We'll start by performing hardware and peripheral setup.
     GlobalInterruptEnable();    // We'll then enable global interrupts for our use.
 
+
     // [Once that's done, we'll enter an infinite loop]:
     for (;;)
     {
         HID_Task();     // We need to run our task to process and deliver data for our IN and OUT endpoints.
         USB_USBTask();  // We also need to run the main USB management task.
 
-        // [Serial commu    nication]:
+        // [Serial communication]:
         if (uart_available()) 
         {
             incomingByte = uart_getchar();
-            uart_putchar(incomingByte); // ACK photon
-            //if (incomingByte=='\n')
-            //{
-            //    uart_putchar('7');
-            //}
+            set_bool(incomingByte);
         } else {
             incomingByte = 0;
         }
@@ -263,7 +319,6 @@ int ypos = 0;
 int bufindex = 0;
 int duration_count = 0;
 int portsval = 0;
-int _SQUID_OR_WALK = 0;
 
 // [Prepare the next report for the host]:
 void GetNextReport(USB_JoystickReport_Input_t* const ReportData) 
@@ -361,63 +416,44 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     ReportData->Button |= SWITCH_L | SWITCH_R;
                     break;
                 case READ_INPUT:
-                    // [w]: if(incomingByte==119)
-                    // [W]: if(incomingByte==87)
-                    // W // FORWARD: ReportData->LY = STICK_MIN;
-                    if(incomingByte==87)
+                    if(W_bool) { ReportData->LY = STICK_MIN; } // FORWARD
+                    if(A_bool) { ReportData->LX = STICK_MIN; } // LEFT
+                    if(S_bool) { ReportData->LY = STICK_MAX; } // BACKWARD
+                    if(D_bool) { ReportData->LX = STICK_MAX; } // RIGHT:
+                    if(J_bool) { ReportData->Button |= SWITCH_ZR; } // FIRE!
+                    if(R_bool) { ReportData->Button |= SWITCH_X; } // R (Map, x)
+                    if(I_bool) { ReportData->Button |= SWITCH_R; } // I (SUB)
+                    if(K_bool) { ReportData->Button |= SWITCH_RCLICK; } // M (SPECIAL)
+                    if(U_bool) { ReportData->Button |= SWITCH_Y; } // U (Reset camera,y)
+                    if(M_bool) { ReportData->Button |= SWITCH_A; } // CONFIRM (A)
+                    if(Q_bool) { ReportData->RX = STICK_MIN; } // LOOK LEFT
+                    if(E_bool) { ReportData->RX = STICK_MAX; } // LOOK RIGHT
+                    if(_SQUID_OR_WALK) { ReportData->Button |= SWITCH_ZL; } // SQUID OR WALK: (F)
+
+                    if(SPACE_bool) // JUMP!
                     {
-                        //uart_print_P('UP!')
-                        ReportData->LY = STICK_MIN;
-                    } else if(incomingByte==119) {
-                        ReportData->LY = STICK_CENTER;
+                        ReportData->Button |= SWITCH_B;
+                        SPACE_bool = false;
                     }
 
-                    // [a]: if(incomingByte==97)
-                    // [A]: if(incomingByte==65)
-                    // A // LEFT: ReportData->LX = STICK_MIN;
-                    if(incomingByte==65)
+                    // 1 = -2
+                    // 3 = -1
+                    // 5 = 0
+                    // 7 = +1
+                    // 9 = +2
+                    if(MOUSE_SPEED==1)
                     {
-                        //uart_print_P('LEFT!')
-                        ReportData->LX = STICK_MIN;
-                    } else if(incomingByte==97) {
-                        ReportData->LX = STICK_CENTER;
+                        ReportData->RX = STICK_MIN; 
+                    } else if(MOUSE_SPEED==3) {
+                        ReportData->RX = 64;
+                    } else if(MOUSE_SPEED==5) {
+                        ReportData->RX = STICK_CENTER;
+                    } else if(MOUSE_SPEED==7) {
+                        ReportData->RX = 192;
+                    } else if(MOUSE_SPEED==9) {
+                        ReportData->RX = STICK_MAX;
                     }
 
-                    // [s]: if(incomingByte==115)
-                    // [S]: if(incomingByte==83)
-                    // S // BACK: ReportData->LY = STICK_MAX;
-                    if(incomingByte==83)
-                    {
-                        //uart_print_P('BACK!')
-                        ReportData->LY = STICK_MAX;
-                    } else if(incomingByte==115) {
-                        ReportData->LY = STICK_CENTER;
-                    }
-
-                    // [d]: if(incomingByte==100)
-                    // [D]: if(incomingByte==68)
-                    // D // RIGHT: ReportData->LX = STICK_MAX;
-                    if(incomingByte==68)
-                    {
-                        //uart_print_P('RIGHT!')
-                        ReportData->LX = STICK_MAX;
-                    } else if(incomingByte==100) {
-                        ReportData->LX = STICK_CENTER;
-                    }
-
-                    // W // FORWARD: ReportData->LY = STICK_MIN;
-                    // A // LEFT: ReportData->LX = STICK_MIN;
-                    // S // BACK: ReportData->LY = STICK_MAX;
-                    // D // RIGHT: ReportData->LX = STICK_MAX;
-                    // F // Squid/Walk: //Toggle squid/walk: _SQUID_OR_WALK = ~_SQUID_OR_WALK;_delay_ms(250); if (_SQUID_OR_WALK): ReportData->Button |= SWITCH_ZL;
-                    // J // Fire/No Fire: ReportData->Button |= SWITCH_ZR;
-                    // R // Confirm (A) ReportData->Button |= SWITCH_A;
-                    // SPACE // Jump (B): ReportData->Button |= SWITCH_B;
-                    // I // X (Map): //ReportData->Button |= SWITCH_X;
-                    // K // A: ReportData->RY = STICK_MAX;
-                    // Q left: ReportData->RX = STICK_MIN; ELSE IF: // E right: ReportData->RX = STICK_MAX; ELSE: ReportData->RX = STICK_CENTER;
-                    // U (sub): ReportData->Button |= SWITCH_R;
-                    // M (special): ReportData->Button |= SWITCH_RCLICK;
                     // HATS for left buttons (BOOYA, etc)
                     //ReportData->HAT = HAT_TOP
                     //ReportData->HAT = HAT_BOTTOM
@@ -432,7 +468,6 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     break;
             }
 
-            ///*
             duration_count++;
 
             if (duration_count > step[bufindex].duration)
@@ -452,7 +487,6 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                 ReportData->RY = STICK_CENTER;
                 ReportData->HAT = HAT_CENTER;
             }
-            //*/
             break;
 
         case CLEANUP:

@@ -67,7 +67,8 @@ class omni_listener():
             print('[MOUSE_PANIC_EXIT]')
 
             # Send LOW for all pins when exiting:
-            self._SERIAL.write(bytearray('\n', 'utf-8'))
+            for _key in self._KEY_MAP:
+                self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
             os._exit(1)
 
     # [NEEDS helper function]: # _handle_special_keys()
@@ -76,8 +77,12 @@ class omni_listener():
             key = key.char
             _key = self._KEY_MAP[key.upper()]
 
+            #self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
             if _key not in self._HELD_KEYS:
                 self._HELD_KEYS.append(_key)
+                self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
+                #print(_key.upper())
+            # ^Can use this approach to not send true over and over
         except Exception as e:
             self._last_typed = 0 #time.time()
 
@@ -107,6 +112,7 @@ class omni_listener():
             key = key.char
             _key = self._KEY_MAP[key.upper()]
             self._HELD_KEYS.remove(_key)
+            self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
         except:
             pass
 
@@ -128,18 +134,22 @@ class omni_listener():
                 _key = self._KEY_MAP['J']
                 if _key not in self._HELD_KEYS:
                     self._HELD_KEYS.append(_key)
+                    self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
             else:
                 _key = self._KEY_MAP['J']
                 self._HELD_KEYS.remove(_key)
+                self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
         elif button==Button.right: # RIGHT_CLICK
             #print('RIGHT_CLICK: (Sub-weapon)')
             if pressed:
-                _key = self._KEY_MAP['U']
+                _key = self._KEY_MAP['I']
                 if _key not in self._HELD_KEYS:
                     self._HELD_KEYS.append(_key)
+                    self._SERIAL.write(bytearray(_key.upper(), 'utf-8'))
             else:
-                _key = self._KEY_MAP['U']
+                _key = self._KEY_MAP['I']
                 self._HELD_KEYS.remove(_key)
+                self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
         else:
             print('OTHER_CLICK')
             # RE-CENTER VIEW?
@@ -152,21 +162,9 @@ class omni_listener():
                 self._last_moved = time.time()
 
                 # [Every Second send all held keys]:
-                if self._SERIAL:# and self._last_key is not None:
-                    if len(self._HELD_KEYS) > 0:
-                        #print('keys pressed: {0}'.format(self._HELD_KEYS))
-                        for _key in self._HELD_KEYS:
-                            self._SERIAL.write(bytearray(_key, 'utf-8'))
-                        self._SERIAL.write(bytearray('\n', 'utf-8'))
-                            #print(bytearray(_key, 'utf-8'))
-                    #print('SERIAL SEND: ')
-                    #_key = self._KEY_MAP['Q']
-                    #self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
-                    #_key = self._KEY_MAP['E']
-                    #self._SERIAL.write(bytearray(_key.lower(), 'utf-8'))
-                    #self._last_key = None
-            #elif (time.time() - self._last_moved) < _delay:
-            #    pass
+                #if self._SERIAL and self._last_key is not None:
+                #    self._SERIAL.write(bytearray('q', 'utf-8'))
+                #    self._SERIAL.write(bytearray('e', 'utf-8'))
 
     def on_move(self, x, y):
         _int_x = int(x)
@@ -174,34 +172,35 @@ class omni_listener():
         self._last_moved = time.time()
         #print('X: {0} | Y: {1}'.format(_int_x, _int_y))
 
-        '''
         if self._last_int_x is not None:
-            _diff = abs(self._last_int_x - _int_x)
-            if _diff < 20:
-                print('_diff (little): {0}'.format(_diff))
-            elif _diff < 100: 
-                print('_diff (big): {0}'.format(_diff))
+            _diff_x = abs(self._last_int_x - _int_x)
 
+        '''
         # [Mouse Controlls]:
         if self._last_int_x:
             # [X]:
             if self._last_int_x > _int_x:
-                _key = self._KEY_MAP['Q']
-                self._HELD_KEYS.append(_key)
-                #print('{0}| LOOKING LEFT'.format(_key))
+                if _diff_x < 20:
+                    _diff_x = '3'
+                elif _diff_x < 100: 
+                    _diff_x = '1'
+                else:
+                    _diff_x = '5'
+                #print('{0}| LOOKING LEFT'.format(_diff))
             elif self._last_int_x < _int_x:
-                _key = self._KEY_MAP['E']
-                self._HELD_KEYS.append(_key)
-                #print('{0}| LOOKING RIGHT'.format(_key))
+                if _diff_x < 20:
+                    _diff_x = '7'
+                elif _diff_x < 100: 
+                    _diff_x = '9'
+                else:
+                    _diff_x = '5'
+                #print('{0}| LOOKING RIGHT'.format(_diff))
 
-            try:
-                # [Report key for X movement]:
-                if _key is not None:
-                    self._last_key = _key
-                    self._HELD_KEYS.append(_key)
-            except:
-                pass
+            if int(_diff_x) > 0:
+                print(_diff_x)
+                self._SERIAL.write(bytearray(_diff_x, 'utf-8'))
         '''
+
 
         self.CHECK_MOUSE_EMERGENCY(_int_x, _int_y)
         self._last_int_x = int(x)
