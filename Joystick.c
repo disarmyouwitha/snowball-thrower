@@ -123,6 +123,8 @@ static const command step[] =
     */
 };
 
+uint8_t incomingByte = 0;
+
 // [Main entry point]:
 int main(void)
 {
@@ -134,6 +136,19 @@ int main(void)
     {
         HID_Task();     // We need to run our task to process and deliver data for our IN and OUT endpoints.
         USB_USBTask();  // We also need to run the main USB management task.
+
+        // [Serial commu    nication]:
+        if (uart_available()) 
+        {
+            incomingByte = uart_getchar();
+            uart_putchar(incomingByte); // ACK photon
+            //if (incomingByte=='\n')
+            //{
+            //    uart_putchar('7');
+            //}
+        } else {
+            incomingByte = 0;
+        }
     }
 }
 
@@ -149,22 +164,6 @@ void SetupHardware(void)
 
     CPU_PRESCALE(0);  // run at 16 MHz
     uart_init(BAUD_RATE);
-
-    // [We can then initialize our hardware and peripherals, including the USB stack]:
-    //DDRB  = 0x00; // Configure Direction: 0=Input, 1=Output
-    //PORTB = 0x0; // Config Input (when DDRx=0): 0=Normal, 1=Pullup Resistor
-
-    //DDRC  = 0x00; //0xFF; //Teensy uses PORTD
-    //PORTC = 0x0;
-
-    //DDRD  = 0x00; //0xFF; //Teensy uses PORTD
-    //PORTD = 0x0;
-
-    //DDRE  = 0x00; //0xFF; //Teensy uses PORTD
-    //PORTE = 0x0;
-
-    //DDRF  = 0x00; //0xFF; //Teensy uses PORTD
-    //PORTF = 0x0;
 
     // The USB stack should be initialized last.
     USB_Init();
@@ -362,133 +361,66 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     ReportData->Button |= SWITCH_L | SWITCH_R;
                     break;
                 case READ_INPUT:
-                    if (uart_available())
+                    // [w]: if(incomingByte==119)
+                    // [W]: if(incomingByte==87)
+                    // W // FORWARD: ReportData->LY = STICK_MIN;
+                    if(incomingByte==87)
                     {
-                        uint8_t c = uart_getchar();
-
-                        if (c==119) //w // LSTICK_UP
-                        {
-                            ReportData->LY = STICK_MIN;
-                        }
-
-                        if (c==97) //a // LSTICK_LEFT
-                        {
-                            ReportData->LX = STICK_MIN;
-                        }
-
-                        if (c==115) //s // LSTICK_DOWN
-                        {
-                            ReportData->LY = STICK_MAX;
-                        }
-
-                        if (c==100) //d // LSTICK_RIGHT
-                        {
-                            ReportData->LX = STICK_MAX;
-                        }
-
-                        // ACK:
-                        uart_putchar(c);
-                        uart_putchar('\r');
-                        uart_putchar('\n');
-                    }
-                    /*
-                    //A0_F6 // W // FORWARD
-                    if (PINF & (1<<6)) 
-                    {
+                        //uart_print_P('UP!')
                         ReportData->LY = STICK_MIN;
+                    } else if(incomingByte==119) {
+                        ReportData->LY = STICK_CENTER;
                     }
 
-                    //A1_F4 // A // LEFT
-                    if (PINF & (1<<4)) 
+                    // [a]: if(incomingByte==97)
+                    // [A]: if(incomingByte==65)
+                    // A // LEFT: ReportData->LX = STICK_MIN;
+                    if(incomingByte==65)
                     {
+                        //uart_print_P('LEFT!')
                         ReportData->LX = STICK_MIN;
+                    } else if(incomingByte==97) {
+                        ReportData->LX = STICK_CENTER;
                     }
 
-                    //A2_F1 // S // BACK
-                    if (PINF & (1<<1)) 
+                    // [s]: if(incomingByte==115)
+                    // [S]: if(incomingByte==83)
+                    // S // BACK: ReportData->LY = STICK_MAX;
+                    if(incomingByte==83)
                     {
+                        //uart_print_P('BACK!')
                         ReportData->LY = STICK_MAX;
+                    } else if(incomingByte==115) {
+                        ReportData->LY = STICK_CENTER;
                     }
 
-                    //A3_E6 // D // RIGHT
-                    if (PINE & (1<<6)) 
+                    // [d]: if(incomingByte==100)
+                    // [D]: if(incomingByte==68)
+                    // D // RIGHT: ReportData->LX = STICK_MAX;
+                    if(incomingByte==68)
                     {
+                        //uart_print_P('RIGHT!')
                         ReportData->LX = STICK_MAX;
+                    } else if(incomingByte==100) {
+                        ReportData->LX = STICK_CENTER;
                     }
 
-                    //A5_B2 // F // Squid/Walk
-                    if (PINB & (1<<2)) 
-                    {
-                        // If pin goes HIGH, toggle squid/walk:
-                        _SQUID_OR_WALK = ~_SQUID_OR_WALK;
-                        _delay_ms(250);
-                    }
-
-                    if (_SQUID_OR_WALK)
-                    {
-                        ReportData->Button |= SWITCH_ZL;
-                    }
-
-                    //A4_B0 // J // Fire/No Fire
-                    if (PINB & (1<<0)) 
-                    {
-                        ReportData->Button |= SWITCH_ZR;
-                    }
-
-                    //D0_C7 // R // Reset Camera (Y) // Confirm (A)
-                    if (PINC & (1<<7)) 
-                    {
-                        //ReportData->Button |= SWITCH_Y;
-                        ReportData->Button |= SWITCH_A;
-                    }
-
-                    //D1_C5 // SPACE // Jump (B)
-                    if (PINC & (1<<5)) 
-                    {
-                        ReportData->Button |= SWITCH_B;
-                    }
-
-                    //D2_C3 // I // X (Map)
-                    if (PINC & (1<<3)) 
-                    {
-                        ReportData->RY = STICK_MIN;
-                        //ReportData->Button |= SWITCH_X;
-                    }
-
-                    //D3_C1 // K // A
-                    if (PINC & (1<<1)) 
-                    {
-                        ReportData->RY = STICK_MAX;
-                        //ReportData->Button |= SWITCH_A;
-                    }
-
+                    // W // FORWARD: ReportData->LY = STICK_MIN;
+                    // A // LEFT: ReportData->LX = STICK_MIN;
+                    // S // BACK: ReportData->LY = STICK_MAX;
+                    // D // RIGHT: ReportData->LX = STICK_MAX;
+                    // F // Squid/Walk: //Toggle squid/walk: _SQUID_OR_WALK = ~_SQUID_OR_WALK;_delay_ms(250); if (_SQUID_OR_WALK): ReportData->Button |= SWITCH_ZL;
+                    // J // Fire/No Fire: ReportData->Button |= SWITCH_ZR;
+                    // R // Confirm (A) ReportData->Button |= SWITCH_A;
+                    // SPACE // Jump (B): ReportData->Button |= SWITCH_B;
+                    // I // X (Map): //ReportData->Button |= SWITCH_X;
+                    // K // A: ReportData->RY = STICK_MAX;
+                    // Q left: ReportData->RX = STICK_MIN; ELSE IF: // E right: ReportData->RX = STICK_MAX; ELSE: ReportData->RX = STICK_CENTER;
+                    // U (sub): ReportData->Button |= SWITCH_R;
+                    // M (special): ReportData->Button |= SWITCH_RCLICK;
                     // HATS for left buttons (BOOYA, etc)
                     //ReportData->HAT = HAT_TOP
                     //ReportData->HAT = HAT_BOTTOM
-
-                    if (PINE & (1<<1)) //D4_E1 // Q left
-                    {
-                        ReportData->RX = 32;//STICK_MIN;//64
-                    } else if (PIND & (1<<7)) //D5_D7 // E right
-                    {
-                        ReportData->RX = 225;//STICK_MAX;192
-                    } else {
-                        ReportData->RX = STICK_CENTER;
-                        //ReportData->RY = STICK_CENTER;
-                    }
-
-                    //D6_D5 // U (sub)
-                    if (PIND & (1<<5)) 
-                    {
-                        ReportData->Button |= SWITCH_R;
-                    }
-
-                    //D7_D3 // M (special)
-                    if (PIND & (1<<3)) 
-                    {
-                        ReportData->Button |= SWITCH_RCLICK;
-                    }
-                    */
 
                     break;
                 default:
@@ -500,9 +432,7 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                     break;
             }
 
-            
-
-            /*
+            ///*
             duration_count++;
 
             if (duration_count > step[bufindex].duration)
@@ -522,7 +452,7 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData)
                 ReportData->RY = STICK_CENTER;
                 ReportData->HAT = HAT_CENTER;
             }
-            */
+            //*/
             break;
 
         case CLEANUP:
