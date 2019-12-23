@@ -46,6 +46,8 @@ enum StringDescriptors_t
 // Descriptor Header Type - HID Class HID Report Descriptor
 #define DTYPE_Report              0x22
 
+#define POLLING_MS 8
+
 // Function Prototypes
 uint16_t CALLBACK_USB_GetDescriptor(
 	const uint16_t wValue,
